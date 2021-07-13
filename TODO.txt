@@ -1,0 +1,5 @@
+support subcommands: add, modify, remove
+support interactive prompts for missing flags
+
+there should be a well defined location util for allcoating new fpfs or moving existing fpfs
+consider support for changing the name of a fpf

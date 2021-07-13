@@ -1,0 +1,85 @@
+Add:
+    Adds a new fuse to the floorplan
+
+    This command supports both adding a new fuse from scratch or adding an existing fuse for the specified projects
+
+    usage:
+        fp add --project=<proj> --name=<name> --ip=<ip> --type=<type> --size=<size> --locked-at-eom=<true|false> [--confidential] [--vb-name=<vb_name>] [--user=<user>] [--group=<group>]
+
+Modify:
+    Modifies an existing fuse properties
+
+    usage:
+        fp modify --project=<proj> --name=<name> [--ip=<ip>] [--size=<size>] [--locked-at-eom=<true|false>] [--confidential=<true|false>] [--vb-name=<vb_name>] [--user=<user>] [--group=<group>] 
+
+Remove:
+    Removes an existing fuse from the floorplan
+
+    usage:
+        fp remove --project=<proj> --name=<name>
+
+====
+allocation util:
+per given project and IP, it should setup a floorplan map consisting of the following:
+    setup:
+    create a full map of current floorplan (NOTE: take into account fpfs that are hw reserved!!!)
+    the map is broken into a collection of arrays
+    each array is a table of 32 by 32 cells
+    each cell is either occupied or not
+    each occupied cell is either locked at eom or not (consider doing it per row?)
+
+    search:
+    params: size, locked-at-eom
+    init: collection of array maps
+    algorithm:
+        for each array in the collection:
+            get range iterator for the array
+            iterate over ranges of size=size
+                check if current range is good:
+                    locked-at-eom property should match the other ones in these rows
+                    range shouln't be in rows used by rom
+                    (desired size is divisable into full or half full rows)
+
+    array map should have the following props:
+        row indexing
+        cell indexing
+        cell_allocated for each cell
+        locked_at_eom for each cell
+        used_by_rom for each cell
+    range iterator should have the following props:
+        start row (inclusive)
+        end row (inclusive)
+        start col (inclusive)
+        end col (inclusive)
+====
+pay attention to validation handling of user flags (some flags require specific validation, e.g. vb-name requires validation that the given name is of type valid-bit)
+====
+Intermediate action representation object for add & modify:
+
+There should be an object describing the full FPF including System level properties and Project level properties.
+The FPF object should be divided into 3 sections:
+
+FPF:
+    System only properties (properties that can only be specified at a system level and does not support project level override):
+        Name
+        IP
+        Type
+        unique id
+    System/Project properties (proerpties that can either be specified at system level or at project level)
+        Size
+        Locked at eom
+        Confidential
+        Valid bit name
+        User
+        Group
+        Permissions
+    Project only properties (properties that can only be specified at a project level and cannot be specified system wide)
+        Module
+        Array
+        Row
+        Col
+
+After the full desired change is precisely described in the FPF object, and assuming the action is valid,
+the system-only proerpties should be updated in the main XML
+the system-project properties should be updated in the override xml (so that we don't alter other projects)
+the project only properties should be updated in the ovveride xml
